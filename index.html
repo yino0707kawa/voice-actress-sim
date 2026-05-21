@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>新人女声优养成模拟器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff7fb;
+      --ink: #2b2530;
+      --muted: #756a78;
+      --panel: #ffffff;
+      --panel-2: #fff0f6;
+      --line: #ead7e4;
+      --accent: #e65f9d;
+      --accent-2: #56b6c2;
+      --gold: #d89b2b;
+      --good: #37a66a;
+      --bad: #d64f62;
+      --warn: #d58a2f;
+      --shadow: rgba(106, 59, 91, 0.16);
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(230, 95, 157, .08) 1px, transparent 1px),
+        linear-gradient(rgba(86, 182, 194, .08) 1px, transparent 1px),
+        radial-gradient(circle at 18% 8%, rgba(255, 211, 232, .95), transparent 22rem),
+        radial-gradient(circle at 82% 10%, rgba(207, 244, 248, .85), transparent 24rem),
+        var(--bg);
+      background-size: 28px 28px, 28px 28px, auto, auto, auto;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 12px;
+      background: var(--panel);
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(106, 59, 91, .08);
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    button:hover:not(:disabled), button:focus-visible {
+      border-color: var(--accent);
+      background: #fff7fb;
+      outline: none;
+    }
+
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { color: #b9adb9; cursor: not-allowed; box-shadow: none; }
+
+    .app {
+      width: min(1220px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 58px;
+      height: 58px;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 10px 18px var(--shadow));
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: clamp(29px, 4vw, 48px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 294px minmax(0, 1fr) 310px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 38px var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 14px 14px 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .hero {
+      min-height: 650px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .stage {
+      min-height: 166px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(230, 95, 157, .14), rgba(86, 182, 194, .10)),
+        #fffafd;
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+    }
+
+    .stage svg {
+      width: 100%;
+      max-height: 132px;
+      display: block;
+    }
+
+    .story {
+      padding: 18px 20px;
+      overflow: auto;
+    }
+
+    .weekline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--accent);
+      font-size: 13px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .story h2 {
+      padding: 0;
+      margin: 0 0 10px;
+      font-size: 24px;
+    }
+
+    .story p {
+      margin: 0 0 12px;
+      color: #514853;
+      line-height: 1.76;
+    }
+
+    .choices {
+      border-top: 1px solid var(--line);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      background: #fffafd;
+    }
+
+    .choice {
+      text-align: left;
+      min-height: 78px;
+    }
+
+    .choice strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .choice small {
+      color: var(--muted);
+      line-height: 1.38;
+    }
+
+    .stats {
+      padding: 10px 14px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .stat {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr) 42px;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .bar {
+      height: 10px;
+      overflow: hidden;
+      background: #f8edf4;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+
+    .fill {
+      display: block;
+      height: 100%;
+      width: 50%;
+      border-radius: inherit;
+      background: var(--accent-2);
+      transition: width .18s ease, background .18s ease;
+    }
+
+    .value {
+      color: var(--muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 0 14px 14px;
+    }
+
+    .meta div {
+      min-height: 62px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .meta span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .meta strong {
+      font-size: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .side {
+      display: grid;
+      gap: 14px;
+    }
+
+    .log, .list {
+      padding: 12px 14px 14px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .log {
+      max-height: 290px;
+      overflow: auto;
+    }
+
+    .log p {
+      margin: 0;
+      padding-left: 9px;
+      border-left: 2px solid #f0bdd6;
+      color: #5e5360;
+      font-size: 13px;
+      line-height: 1.48;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #f1dfe9;
+      color: #514853;
+    }
+
+    .item:last-child { border-bottom: 0; }
+
+    .tag {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .ending {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid rgba(230, 95, 157, .45);
+      border-radius: 8px;
+      background: rgba(255, 240, 246, .9);
+    }
+
+    .notice {
+      margin: 8px 14px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
+      .side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 700px) {
+      .app { width: min(100vw - 18px, 1220px); padding-top: 14px; }
+      .top { grid-template-columns: 1fr; align-items: start; }
+      .toolbar { justify-content: flex-start; }
+      .choices, .side { grid-template-columns: 1fr; }
+      .hero { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 64 64" role="img" aria-label="麦克风与耳机">
+          <circle cx="32" cy="32" r="30" fill="#fff0f6" stroke="#e65f9d" stroke-width="2"/>
+          <path d="M18 32a14 14 0 0 1 28 0" fill="none" stroke="#56b6c2" stroke-width="4" stroke-linecap="round"/>
+          <rect x="25" y="18" width="14" height="28" rx="7" fill="#e65f9d"/>
+          <path d="M22 32v4a10 10 0 0 0 20 0v-4" fill="none" stroke="#2b2530" stroke-width="3" stroke-linecap="round"/>
+          <path d="M32 46v8M24 54h16" stroke="#2b2530" stroke-width="3" stroke-linecap="round"/>
+          <path d="M47 34c5 1 7 4 7 8 0 5-4 8-9 8" fill="none" stroke="#d89b2b" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h1>新人女声优养成模拟器</h1>
+          <p class="subtitle">你是刚进事务所的新人。48 周内，靠演技、嗓子、宅力和一点点运气，拿下自己的代表角色。</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="saveBtn" type="button">保存</button>
+        <button id="loadBtn" type="button">读取</button>
+        <button id="newBtn" type="button">新游戏</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>个人状态</h2>
+        <div class="stats" id="stats"></div>
+        <div class="meta">
+          <div><span>周数</span><strong id="weekText">1 / 48</strong></div>
+          <div><span>粉丝</span><strong id="fansText">0</strong></div>
+          <div><span>资金</span><strong id="moneyText">0</strong></div>
+          <div><span>炎上风险</span><strong id="riskText">低</strong></div>
+        </div>
+      </aside>
+
+      <section class="panel hero">
+        <div class="stage" aria-hidden="true">
+          <svg viewBox="0 0 780 160" preserveAspectRatio="none">
+            <rect width="780" height="160" fill="#fffafd"/>
+            <path d="M0 118 C120 92 235 132 360 104 S610 92 780 120 V160 H0z" fill="#f7e5ef"/>
+            <rect x="74" y="46" width="168" height="78" rx="8" fill="#ffffff" stroke="#ead7e4" stroke-width="3"/>
+            <path d="M92 64h132M92 82h98M92 100h118" stroke="#e65f9d" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+            <rect x="292" y="32" width="196" height="110" rx="12" fill="#fff" stroke="#ead7e4" stroke-width="3"/>
+            <circle cx="330" cy="72" r="22" fill="#ffd3e8"/>
+            <rect x="365" y="57" width="88" height="12" rx="6" fill="#56b6c2" opacity=".75"/>
+            <rect x="365" y="82" width="66" height="12" rx="6" fill="#e65f9d" opacity=".7"/>
+            <path d="M565 114h104l-18-58h-68z" fill="#ffffff" stroke="#ead7e4" stroke-width="3"/>
+            <rect x="598" y="36" width="36" height="58" rx="18" fill="#e65f9d"/>
+            <path d="M588 68v10a28 28 0 0 0 56 0V68" fill="none" stroke="#2b2530" stroke-width="4" stroke-linecap="round"/>
+            <path d="M616 106v26M596 132h40" stroke="#2b2530" stroke-width="4" stroke-linecap="round"/>
+            <text x="318" y="124" fill="#756a78" font-size="18">AUDITION</text>
+          </svg>
+        </div>
+        <article class="story">
+          <div class="weekline"><span id="phaseText"></span><span id="moodText"></span></div>
+          <h2 id="titleText"></h2>
+          <div id="storyText"></div>
+        </article>
+        <div class="choices" id="choices"></div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>活动记录</h2>
+          <div class="log" id="log"></div>
+        </section>
+        <section class="panel">
+          <h2>代表履历</h2>
+          <div class="list" id="roles"></div>
+          <p class="notice">试音成功会增加履历。不同结局会参考粉丝、履历、压力和炎上风险。</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const MAX_WEEK = 48;
+    const SAVE_KEY = "voice-actress-sim-v1";
+
+    const baseState = {
+      week: 1,
+      acting: 36,
+      voice: 42,
+      singing: 28,
+      stamina: 62,
+      mental: 58,
+      otaku: 46,
+      talk: 34,
+      fans: 120,
+      money: 24,
+      agency: 30,
+      flame: 6,
+      roles: [],
+      ending: null,
+      log: ["你签下了第一份事务所合约。经纪人递来一张日程表：上面只有一行字，别睡过头。"]
+    };
+
+    const statDefs = [
+      ["演技", "acting"],
+      ["声线", "voice"],
+      ["歌唱", "singing"],
+      ["体力", "stamina"],
+      ["心理", "mental"],
+      ["宅力", "otaku"],
+      ["谈吐", "talk"]
+    ];
+
+    const schedules = [
+      {
+        label: "台词课狂练",
+        hint: "演技 +9，声线 +4，体力 -8，资金 -4",
+        effect: { acting: 9, voice: 4, stamina: -8, money: -4 },
+        cost: { money: 4 },
+        log: "你对着剧本练了三小时哭戏。隔壁练习室以为水管爆了。"
+      },
+      {
+        label: "声线特训",
+        hint: "声线 +9，心理 -4，体力 -6，资金 -3",
+        effect: { voice: 9, mental: -4, stamina: -6, money: -3 },
+        cost: { money: 3 },
+        log: "萝莉音、姐姐音、冷淡音轮流切换。便利店店员听完沉默了。"
+      },
+      {
+        label: "偶像声优课程",
+        hint: "歌唱 +8，谈吐 +4，体力 -10，资金 -5",
+        effect: { singing: 8, talk: 4, stamina: -10, money: -5 },
+        cost: { money: 5 },
+        log: "你学会了边唱边挥手，还学会了笑着假装不喘。"
+      },
+      {
+        label: "深夜补番研究",
+        hint: "宅力 +10，演技 +3，体力 -7，心理 +2",
+        effect: { otaku: 10, acting: 3, stamina: -7, mental: 2 },
+        log: "你把一季动画看完，还认真记下了傲娇在第三集破防的节奏。"
+      },
+      {
+        label: "广播直播营业",
+        hint: "谈吐 +8，粉丝 +140，心理 -7，炎上 +4",
+        effect: { talk: 8, fans: 140, mental: -7, flame: 4 },
+        log: "直播间弹幕刷起了‘这孩子真的能处’，也有人开始考古你的旧动态。"
+      },
+      {
+        label: "打工回血",
+        hint: "资金 +12，体力 -8，事务所评价 -2",
+        effect: { money: 12, stamina: -8, agency: -2 },
+        log: "你在主题咖啡店打工，被客人要求即兴配一段魔法咒语。小费不错。"
+      },
+      {
+        label: "认真休息",
+        hint: "体力 +14，心理 +12，粉丝 -20",
+        effect: { stamina: 14, mental: 12, fans: -20 },
+        log: "你睡到自然醒。手机里只有经纪人的三个句号。"
+      },
+      {
+        label: "SNS 整活",
+        hint: "粉丝 +220，宅力 +3，炎上 +9，心理 -5",
+        effect: { fans: 220, otaku: 3, flame: 9, mental: -5 },
+        log: "你发了自制表情包。转发很多，解释也很多。"
+      }
+    ];
+
+    const auditions = [
+      {
+        id: "tsundere",
+        title: "傲娇青梅竹马试音",
+        text: "制作组要一个能把‘才、才不是为了你’说出三层含义的人。你看了眼台本，台词密度像期末考试。",
+        req: { acting: 48, voice: 45, otaku: 40 },
+        success: "《放学后的星尘便当》傲娇青梅",
+        failLog: "你把傲娇演成了真生气。音响监督礼貌地说：很有攻击性。",
+        choices: [
+          { label: "正面挑战", mod: 0, hint: "按当前属性判定，成功可获得角色" },
+          { label: "加入宅梗理解", mod: 10, hint: "宅力足够时更稳，炎上 +2", effect: { flame: 2 } },
+          { label: "先撤，回去修炼", mod: -999, hint: "心理 +4，事务所评价 -2", effect: { mental: 4, agency: -2 } }
+        ]
+      },
+      {
+        id: "idol",
+        title: "偶像番主役试音",
+        text: "棚里站着一排会唱会跳的怪物新人。你突然理解了经纪人说的‘这行不只靠声音’。",
+        req: { singing: 50, talk: 42, stamina: 44 },
+        success: "《闪耀吧！小行星舞台》主役",
+        failLog: "副歌第一遍还行，第二遍你的灵魂已经坐电车回家了。",
+        choices: [
+          { label: "全力唱跳", mod: 4, hint: "体力 -10，成功可大涨粉丝", effect: { stamina: -10 } },
+          { label: "突出角色感", mod: 0, hint: "演技会额外参与判定" },
+          { label: "战略撤退", mod: -999, hint: "体力 +3，事务所评价 -2", effect: { stamina: 3, agency: -2 } }
+        ]
+      },
+      {
+        id: "mascot",
+        title: "手游吉祥物录音",
+        text: "台本只有三页，但每句都要元气到能把玩家从抽卡井底拉出来。",
+        req: { voice: 50, talk: 38, mental: 38 },
+        success: "《异世界便利店》看板吉祥物",
+        failLog: "你喊了二十遍登录奖励，最后听起来像讨债提醒。",
+        choices: [
+          { label: "元气拉满", mod: 5, hint: "声线判定更重要，体力 -6", effect: { stamina: -6 } },
+          { label: "可爱但省电", mod: 0, hint: "稳定发挥" },
+          { label: "放弃本次", mod: -999, hint: "心理 +3，粉丝 -10", effect: { mental: 3, fans: -10 } }
+        ]
+      }
+    ];
+
+    const events = [
+      {
+        title: "广播事故：麦没关",
+        text: [
+          "节目中场休息，你小声说了一句‘这周台本好像比泡面说明书还长’。",
+          "下一秒，导播的表情让你明白：麦克风，从来没有真正休息。"
+        ],
+        choices: [
+          { label: "当场土下座式道歉", hint: "炎上 -8，心理 -5，谈吐 +2", effect: { flame: -8, mental: -5, talk: 2 }, log: "你道歉得太诚恳，切片标题变成了‘新人声优求生欲名场面’。" },
+          { label: "顺势吐槽成节目梗", hint: "粉丝 +260，谈吐 +5，炎上 +5", effect: { fans: 260, talk: 5, flame: 5 }, log: "你把事故圆成了固定环节。经纪人一边胃痛一边点头。" },
+          { label: "装作信号不好", hint: "炎上 +10，事务所评价 -5", effect: { flame: 10, agency: -5 }, log: "观众不一定懂配音，但都懂什么叫装傻。" }
+        ]
+      },
+      {
+        title: "前辈请你喝奶茶",
+        text: [
+          "录音结束后，前辈把你叫到自动贩卖机旁。",
+          "她说：新人时期最重要的不是赢，是不要在还没赢之前把自己烧干。"
+        ],
+        choices: [
+          { label: "请教演技细节", hint: "演技 +8，心理 +4", effect: { acting: 8, mental: 4 }, log: "前辈示范了一个眼神三种情绪。虽然动画里看不到眼神，但你悟了。" },
+          { label: "请教营业边界", hint: "谈吐 +7，炎上 -5", effect: { talk: 7, flame: -5 }, log: "你学到一句万能回复：谢谢喜欢，我会继续努力。" },
+          { label: "聊最近补的番", hint: "宅力 +7，粉丝 +60", effect: { otaku: 7, fans: 60 }, log: "前辈其实也是隐藏宅。你们在贩卖机前聊到灯自动熄灭。" }
+        ]
+      },
+      {
+        title: "粉丝来信箱爆满",
+        text: [
+          "事务所递来一箱粉丝信。里面有画、有长文感想，还有一张写着‘请务必活下去’的便利贴。",
+          "你突然意识到，自己的声音已经抵达了某些人的日常。"
+        ],
+        choices: [
+          { label: "逐封回信", hint: "粉丝 +180，心理 +8，体力 -7", effect: { fans: 180, mental: 8, stamina: -7 }, log: "你回信回到手酸，但心里像被热可可填满。" },
+          { label: "录感谢短视频", hint: "粉丝 +260，谈吐 +3，炎上 +3", effect: { fans: 260, talk: 3, flame: 3 }, log: "感谢视频播放量不错，评论区开始争论你到底是不是天然。" },
+          { label: "先收藏起来", hint: "心理 +3，事务所评价 +2", effect: { mental: 3, agency: 2 }, log: "你把信放进柜子最上层。低落时再打开。" }
+        ]
+      },
+      {
+        title: "漫展舞台突袭",
+        text: [
+          "原定嘉宾堵在路上，主持人看向你：能不能撑十分钟？",
+          "台下全是熟悉作品三秒能接梗的观众。这里是舞台，也是大型宅力考试。"
+        ],
+        choices: [
+          { label: "即兴主持", hint: "谈吐 +8，粉丝 +320，体力 -8", effect: { talk: 8, fans: 320, stamina: -8 }, log: "你撑满了十二分钟。台下甚至开始喊安可。" },
+          { label: "现场配名场面", hint: "演技 +5，声线 +5，粉丝 +220", effect: { acting: 5, voice: 5, fans: 220 }, log: "你的即兴配音被上传，标题是‘新人但很会’。" },
+          { label: "把锅推给主持人", hint: "心理 +4，事务所评价 -6", effect: { mental: 4, agency: -6 }, log: "你成功脱身，也成功被经纪人记了一笔。" }
+        ]
+      }
+    ];
+
+    let state = loadGameData() || structuredClone(baseState);
+
+    const $ = (selector) => document.querySelector(selector);
+    const nodes = {
+      stats: $("#stats"),
+      weekText: $("#weekText"),
+      fansText: $("#fansText"),
+      moneyText: $("#moneyText"),
+      riskText: $("#riskText"),
+      phaseText: $("#phaseText"),
+      moodText: $("#moodText"),
+      titleText: $("#titleText"),
+      storyText: $("#storyText"),
+      choices: $("#choices"),
+      log: $("#log"),
+      roles: $("#roles"),
+      saveBtn: $("#saveBtn"),
+      loadBtn: $("#loadBtn"),
+      newBtn: $("#newBtn")
+    };
+
+    function clamp(value, max = 100) {
+      return Math.max(0, Math.min(max, Math.round(value)));
+    }
+
+    function applyEffect(effect = {}) {
+      for (const [key, value] of Object.entries(effect)) {
+        if (statDefs.some(([, stat]) => stat === key) || key === "agency" || key === "flame") {
+          state[key] = clamp(state[key] + value);
+        } else if (key === "fans") {
+          state.fans = Math.max(0, state.fans + value);
+        } else {
+          state[key] += value;
+        }
+      }
+    }
+
+    function hasCost(cost = {}) {
+      return Object.entries(cost).every(([key, value]) => state[key] >= value);
+    }
+
+    function addLog(text) {
+      state.log.unshift(`第 ${state.week} 周：${text}`);
+      state.log = state.log.slice(0, 18);
+    }
+
+    function weeklyDrift() {
+      state.stamina = clamp(state.stamina - 3);
+      state.mental = clamp(state.mental - (state.flame > 45 ? 7 : 3));
+      state.agency = clamp(state.agency + (state.roles.length > 2 ? 2 : 0));
+      state.fans = Math.max(0, Math.round(state.fans + state.roles.length * 18 - (state.flame > 60 ? 90 : 0)));
+      if (state.week % 4 === 0) {
+        const income = 8 + state.roles.length * 4 + Math.floor(state.fans / 900);
+        state.money += income;
+        addLog(`月末结算到账 ${income}。经纪人说这叫成长曲线，不叫穷。`);
+      }
+    }
+
+    function chooseSchedule(choice) {
+      if (state.ending || !hasCost(choice.cost)) return;
+      applyEffect(choice.effect);
+      addLog(choice.log);
+      nextWeek();
+    }
+
+    function chooseEvent(choice) {
+      if (state.ending) return;
+      applyEffect(choice.effect);
+      addLog(choice.log);
+      nextWeek();
+    }
+
+    function chooseAudition(audition, choice) {
+      if (state.ending) return;
+      applyEffect(choice.effect);
+      if (choice.mod <= -999) {
+        addLog("你选择暂时不参加试音。机会还有，嗓子只有一副。");
+        nextWeek();
+        return;
+      }
+      const score = Object.entries(audition.req).reduce((sum, [key, req]) => sum + (state[key] - req), 0) + choice.mod + Math.floor(state.agency / 10);
+      const extra = audition.id === "idol" ? Math.floor((state.acting - 40) / 4) : 0;
+      if (score + extra >= 0) {
+        if (!state.roles.includes(audition.success)) state.roles.push(audition.success);
+        const fanGain = audition.id === "idol" ? 900 : 520;
+        applyEffect({ fans: fanGain, agency: 10, mental: 4 });
+        addLog(`试音成功！你拿到了「${audition.success}」。粉丝数开始出现你不敢数的增长。`);
+      } else {
+        applyEffect({ mental: -8, agency: -3 });
+        addLog(audition.failLog);
+      }
+      nextWeek();
+    }
+
+    function nextWeek() {
+      weeklyDrift();
+      state.week += 1;
+      evaluateEnding();
+      saveGame(false);
+      render();
+    }
+
+    function evaluateEnding() {
+      if (state.mental <= 0) {
+        state.ending = { title: "休养结局", text: "你按下暂停键。事务所公告写得很温柔：为了以更好的状态再次见面。" };
+      } else if (state.stamina <= 0) {
+        state.ending = { title: "过劳倒下", text: "你在录音棚沙发上睡到第二天下午。经纪人终于把日程表撕掉了一半。" };
+      } else if (state.flame >= 100) {
+        state.ending = { title: "传说级炎上", text: "热搜、切片、长文分析同时抵达。你学会了互联网不是录音棚，它不会喊停。" };
+      } else if (state.week > MAX_WEEK) {
+        if (state.roles.some(role => role.includes("主役")) && state.fans >= 8000) {
+          state.ending = { title: "奇迹主役结局", text: "动画播出后，你的名字和角色一起被记住。你终于有了第一句代表台词。" };
+        } else if (state.singing >= 70 && state.talk >= 62 && state.fans >= 6000) {
+          state.ending = { title: "偶像声优路线", text: "你站上小型 Live 舞台，台下荧光棒像一片会呼吸的星海。" };
+        } else if (state.acting >= 76 && state.roles.length >= 3) {
+          state.ending = { title: "实力派配角路线", text: "你还不是最大牌的名字，但监督们开始说：这个角色可以找她。" };
+        } else if (state.talk >= 72 && state.fans >= 4500) {
+          state.ending = { title: "广播主持路线", text: "你的节目有了固定听众。大家每周来听你笑，也听你慢慢变强。" };
+        } else {
+          state.ending = { title: "稳步前进结局", text: "一年过去，你仍在新人名单里，但已经不再是没有名字的新人。" };
+        }
+      }
+    }
+
+    function currentMode() {
+      if (state.ending) return { type: "ending" };
+      if (state.week % 8 === 0) return { type: "audition", data: auditions[(state.week / 8 - 1) % auditions.length] };
+      if (state.week % 5 === 0) return { type: "event", data: events[(state.week / 5 - 1) % events.length] };
+      return { type: "schedule" };
+    }
+
+    function riskLabel() {
+      if (state.flame >= 75) return "危险";
+      if (state.flame >= 45) return "偏高";
+      if (state.flame >= 20) return "有点热";
+      return "低";
+    }
+
+    function moodLabel() {
+      if (state.mental < 30) return "心态：快碎了";
+      if (state.stamina < 30) return "状态：电量不足";
+      if (state.flame > 55) return "网络：火药味";
+      if (state.fans > 5000) return "粉丝：开始成群";
+      return "状态：还活着，很伟大";
+    }
+
+    function barColor(value) {
+      if (value < 25) return "var(--bad)";
+      if (value < 45) return "var(--warn)";
+      if (value > 75) return "var(--good)";
+      return "var(--accent-2)";
+    }
+
+    function renderStats() {
+      nodes.stats.innerHTML = statDefs.map(([label, key]) => `
+        <div class="stat">
+          <span>${label}</span>
+          <span class="bar"><span class="fill" style="width:${state[key]}%; background:${barColor(state[key])}"></span></span>
+          <span class="value">${state[key]}</span>
+        </div>
+      `).join("");
+      nodes.weekText.textContent = `${Math.min(state.week, MAX_WEEK)} / ${MAX_WEEK}`;
+      nodes.fansText.textContent = shortNum(state.fans);
+      nodes.moneyText.textContent = state.money;
+      nodes.riskText.textContent = riskLabel();
+    }
+
+    function renderStory() {
+      const mode = currentMode();
+      nodes.phaseText.textContent = state.ending ? "年度结算" : `第 ${state.week} 周`;
+      nodes.moodText.textContent = moodLabel();
+      if (state.ending) {
+        nodes.titleText.textContent = state.ending.title;
+        nodes.storyText.innerHTML = `
+          <p>${state.ending.text}</p>
+          <div class="ending">
+            <p>最终数据：粉丝 ${state.fans}，履历 ${state.roles.length} 个，演技 ${state.acting}，声线 ${state.voice}，歌唱 ${state.singing}，谈吐 ${state.talk}，炎上风险 ${state.flame}。</p>
+          </div>
+        `;
+        nodes.choices.innerHTML = `<button class="choice" type="button" onclick="newGame()"><strong>重新开始</strong><small>带着这次的经验，再开一条新人路线。</small></button>`;
+        return;
+      }
+      if (mode.type === "audition") renderAudition(mode.data);
+      if (mode.type === "event") renderEvent(mode.data);
+      if (mode.type === "schedule") renderSchedule();
+    }
+
+    function renderSchedule() {
+      nodes.titleText.textContent = "本周日程安排";
+      nodes.storyText.innerHTML = `
+        <p>经纪人把白板推到你面前。本周没有强制试音，是自由安排的宝贵时间。</p>
+        <p>你可以练功、营业、补番、休息，或者去打工补贴逐渐变薄的钱包。</p>
+      `;
+      nodes.choices.innerHTML = schedules.map((choice, index) => {
+        const disabled = hasCost(choice.cost) ? "" : "disabled";
+        const hint = hasCost(choice.cost) ? choice.hint : "资金不足，接下来要考虑打工了";
+        return `<button class="choice" ${disabled} onclick="chooseSchedule(schedules[${index}])"><strong>${choice.label}</strong><small>${hint}</small></button>`;
+      }).join("");
+    }
+
+    function renderEvent(event) {
+      nodes.titleText.textContent = event.title;
+      nodes.storyText.innerHTML = event.text.map(line => `<p>${line}</p>`).join("");
+      nodes.choices.innerHTML = event.choices.map((choice, index) => `
+        <button class="choice" onclick="chooseEvent(events[(state.week / 5 - 1) % events.length].choices[${index}])"><strong>${choice.label}</strong><small>${choice.hint}</small></button>
+      `).join("");
+    }
+
+    function renderAudition(audition) {
+      nodes.titleText.textContent = audition.title;
+      nodes.storyText.innerHTML = `
+        <p>${audition.text}</p>
+        <p>参考门槛：${Object.entries(audition.req).map(([key, value]) => `${labelOf(key)} ${value}`).join("，")}。</p>
+      `;
+      nodes.choices.innerHTML = audition.choices.map((choice, index) => `
+        <button class="choice" onclick="chooseAudition(auditions[(state.week / 8 - 1) % auditions.length], auditions[(state.week / 8 - 1) % auditions.length].choices[${index}])"><strong>${choice.label}</strong><small>${choice.hint}</small></button>
+      `).join("");
+    }
+
+    function renderSide() {
+      nodes.log.innerHTML = state.log.map(item => `<p>${item}</p>`).join("");
+      nodes.roles.innerHTML = state.roles.length
+        ? state.roles.map(role => `<div class="item"><span>${role}</span><span class="tag">出演</span></div>`).join("")
+        : `<div class="item"><span>还没有正式角色</span><span class="tag">新人</span></div>`;
+    }
+
+    function render() {
+      renderStats();
+      renderStory();
+      renderSide();
+    }
+
+    function labelOf(key) {
+      const found = statDefs.find(([, stat]) => stat === key);
+      return found ? found[0] : key;
+    }
+
+    function shortNum(value) {
+      if (value >= 10000) return `${(value / 10000).toFixed(1)}万`;
+      return String(value);
+    }
+
+    function saveGame(show = true) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+      if (show) {
+        addLog("进度已保存。明天的你会感谢今天没有手滑的你。");
+        render();
+      }
+    }
+
+    function loadGameData() {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function loadGame() {
+      const saved = loadGameData();
+      if (saved) {
+        state = saved;
+        addLog("读取了上次的进度。台本还在，人生也还在。");
+      } else {
+        addLog("没有找到存档。看来只能从新人重新开始了。");
+      }
+      render();
+    }
+
+    function newGame() {
+      state = structuredClone(baseState);
+      localStorage.removeItem(SAVE_KEY);
+      render();
+    }
+
+    nodes.saveBtn.addEventListener("click", () => saveGame(true));
+    nodes.loadBtn.addEventListener("click", loadGame);
+    nodes.newBtn.addEventListener("click", newGame);
+    render();
+  </script>
+</body>
+</html>
