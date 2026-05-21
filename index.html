@@ -309,6 +309,7 @@
       color: var(--muted);
       font-size: 13px;
       text-align: right;
+      white-space: nowrap;
     }
 
     .ending {
@@ -354,7 +355,7 @@
         </svg>
         <div>
           <h1>新人女声优养成模拟器</h1>
-          <p class="subtitle">你是刚进事务所的新人。48 周内，靠演技、嗓子、宅力和一点点运气，拿下自己的代表角色。</p>
+          <p class="subtitle">你是刚进事务所的新人。48 周内，靠演技、嗓子、宅力和一点点心动，拿下代表角色。</p>
         </div>
       </div>
       <div class="toolbar">
@@ -408,9 +409,9 @@
           <div class="log" id="log"></div>
         </section>
         <section class="panel">
-          <h2>代表履历</h2>
+          <h2>关系与履历</h2>
           <div class="list" id="roles"></div>
-          <p class="notice">试音成功会增加履历。不同结局会参考粉丝、履历、压力和炎上风险。</p>
+          <p class="notice">恋爱线对象是同期女声优「雾岛凛」。好感度和关系阶段会影响部分事件与结局。</p>
         </section>
       </aside>
     </section>
@@ -418,7 +419,7 @@
 
   <script>
     const MAX_WEEK = 48;
-    const SAVE_KEY = "voice-actress-sim-v1";
+    const SAVE_KEY = "voice-actress-sim-v2";
 
     const baseState = {
       week: 1,
@@ -429,13 +430,15 @@
       mental: 58,
       otaku: 46,
       talk: 34,
+      affection: 12,
       fans: 120,
       money: 24,
       agency: 30,
       flame: 6,
+      relationship: 0,
       roles: [],
       ending: null,
-      log: ["你签下了第一份事务所合约。经纪人递来一张日程表：上面只有一行字，别睡过头。"]
+      log: ["你签下了第一份事务所合约。同期的雾岛凛递来一瓶水：别紧张，录音棚不会吃人，大概。"]
     };
 
     const statDefs = [
@@ -445,87 +448,47 @@
       ["体力", "stamina"],
       ["心理", "mental"],
       ["宅力", "otaku"],
-      ["谈吐", "talk"]
+      ["谈吐", "talk"],
+      ["好感", "affection"]
     ];
 
     const schedules = [
-      {
-        label: "台词课狂练",
-        hint: "演技 +9，声线 +4，体力 -8，资金 -4",
-        effect: { acting: 9, voice: 4, stamina: -8, money: -4 },
-        cost: { money: 4 },
-        log: "你对着剧本练了三小时哭戏。隔壁练习室以为水管爆了。"
-      },
-      {
-        label: "声线特训",
-        hint: "声线 +9，心理 -4，体力 -6，资金 -3",
-        effect: { voice: 9, mental: -4, stamina: -6, money: -3 },
-        cost: { money: 3 },
-        log: "萝莉音、姐姐音、冷淡音轮流切换。便利店店员听完沉默了。"
-      },
-      {
-        label: "偶像声优课程",
-        hint: "歌唱 +8，谈吐 +4，体力 -10，资金 -5",
-        effect: { singing: 8, talk: 4, stamina: -10, money: -5 },
-        cost: { money: 5 },
-        log: "你学会了边唱边挥手，还学会了笑着假装不喘。"
-      },
-      {
-        label: "深夜补番研究",
-        hint: "宅力 +10，演技 +3，体力 -7，心理 +2",
-        effect: { otaku: 10, acting: 3, stamina: -7, mental: 2 },
-        log: "你把一季动画看完，还认真记下了傲娇在第三集破防的节奏。"
-      },
-      {
-        label: "广播直播营业",
-        hint: "谈吐 +8，粉丝 +140，心理 -7，炎上 +4",
-        effect: { talk: 8, fans: 140, mental: -7, flame: 4 },
-        log: "直播间弹幕刷起了‘这孩子真的能处’，也有人开始考古你的旧动态。"
-      },
-      {
-        label: "打工回血",
-        hint: "资金 +12，体力 -8，事务所评价 -2",
-        effect: { money: 12, stamina: -8, agency: -2 },
-        log: "你在主题咖啡店打工，被客人要求即兴配一段魔法咒语。小费不错。"
-      },
-      {
-        label: "认真休息",
-        hint: "体力 +14，心理 +12，粉丝 -20",
-        effect: { stamina: 14, mental: 12, fans: -20 },
-        log: "你睡到自然醒。手机里只有经纪人的三个句号。"
-      },
-      {
-        label: "SNS 整活",
-        hint: "粉丝 +220，宅力 +3，炎上 +9，心理 -5",
-        effect: { fans: 220, otaku: 3, flame: 9, mental: -5 },
-        log: "你发了自制表情包。转发很多，解释也很多。"
-      }
+      { label: "台词课狂练", hint: "演技 +9，声线 +4，体力 -8，资金 -4", effect: { acting: 9, voice: 4, stamina: -8, money: -4 }, cost: { money: 4 }, log: "你对着剧本练了三小时哭戏。隔壁练习室以为水管爆了。" },
+      { label: "声线特训", hint: "声线 +9，心理 -4，体力 -6，资金 -3", effect: { voice: 9, mental: -4, stamina: -6, money: -3 }, cost: { money: 3 }, log: "萝莉音、姐姐音、冷淡音轮流切换。便利店店员听完沉默了。" },
+      { label: "偶像声优课程", hint: "歌唱 +8，谈吐 +4，体力 -10，资金 -5", effect: { singing: 8, talk: 4, stamina: -10, money: -5 }, cost: { money: 5 }, log: "你学会了边唱边挥手，还学会了笑着假装不喘。" },
+      { label: "深夜补番研究", hint: "宅力 +10，演技 +3，体力 -7，心理 +2", effect: { otaku: 10, acting: 3, stamina: -7, mental: 2 }, log: "你把一季动画看完，还认真记下了傲娇在第三集破防的节奏。" },
+      { label: "广播直播营业", hint: "谈吐 +8，粉丝 +140，心理 -7，炎上 +4", effect: { talk: 8, fans: 140, mental: -7, flame: 4 }, log: "直播间弹幕刷起了“这孩子真的能处”，也有人开始考古你的旧动态。" },
+      { label: "和凛对戏", hint: "演技 +5，声线 +3，好感 +8，心理 +4，体力 -6", effect: { acting: 5, voice: 3, affection: 8, mental: 4, stamina: -6 }, log: "你和雾岛凛练到事务所关灯。她说你的哭腔很好听，你差点忘词。" },
+      { label: "约凛逛中古店", hint: "好感 +10，宅力 +5，资金 -5，粉丝 +40", effect: { affection: 10, otaku: 5, money: -5, fans: 40 }, cost: { money: 5 }, log: "你们在中古店抢到同一张角色歌 CD。最后决定一起听，耳机一人一边。" },
+      { label: "打工回血", hint: "资金 +12，体力 -8，事务所评价 -2", effect: { money: 12, stamina: -8, agency: -2 }, log: "你在主题咖啡店打工，被客人要求即兴配一段魔法咒语。小费不错。" },
+      { label: "认真休息", hint: "体力 +14，心理 +12，粉丝 -20", effect: { stamina: 14, mental: 12, fans: -20 }, log: "你睡到自然醒。手机里只有经纪人的三个句号，还有凛发来的猫猫贴图。" },
+      { label: "SNS 整活", hint: "粉丝 +220，宅力 +3，炎上 +9，心理 -5", effect: { fans: 220, otaku: 3, flame: 9, mental: -5 }, log: "你发了自制表情包。转发很多，解释也很多。" }
     ];
 
     const auditions = [
       {
         id: "tsundere",
         title: "傲娇青梅竹马试音",
-        text: "制作组要一个能把‘才、才不是为了你’说出三层含义的人。你看了眼台本，台词密度像期末考试。",
+        text: "制作组要一个能把“才、才不是为了你”说出三层含义的人。你看了眼台本，台词密度像期末考试。",
         req: { acting: 48, voice: 45, otaku: 40 },
         success: "《放学后的星尘便当》傲娇青梅",
         failLog: "你把傲娇演成了真生气。音响监督礼貌地说：很有攻击性。",
         choices: [
           { label: "正面挑战", mod: 0, hint: "按当前属性判定，成功可获得角色" },
-          { label: "加入宅梗理解", mod: 10, hint: "宅力足够时更稳，炎上 +2", effect: { flame: 2 } },
+          { label: "回想凛的吐槽", mod: 10, hint: "好感较高时更稳，好感 +2", effect: { affection: 2 } },
           { label: "先撤，回去修炼", mod: -999, hint: "心理 +4，事务所评价 -2", effect: { mental: 4, agency: -2 } }
         ]
       },
       {
         id: "idol",
-        title: "偶像番主役试音",
-        text: "棚里站着一排会唱会跳的怪物新人。你突然理解了经纪人说的‘这行不只靠声音’。",
+        title: "偶像番双人组合试音",
+        text: "这次试音要两人一组。雾岛凛站在你旁边，低声说：别看我，我也紧张。",
         req: { singing: 50, talk: 42, stamina: 44 },
-        success: "《闪耀吧！小行星舞台》主役",
-        failLog: "副歌第一遍还行，第二遍你的灵魂已经坐电车回家了。",
+        success: "《闪耀吧！小行星舞台》双人组合",
+        failLog: "副歌第一遍还行，第二遍你们的同步率已经坐电车回家了。",
         choices: [
-          { label: "全力唱跳", mod: 4, hint: "体力 -10，成功可大涨粉丝", effect: { stamina: -10 } },
-          { label: "突出角色感", mod: 0, hint: "演技会额外参与判定" },
+          { label: "和凛全力唱跳", mod: 8, hint: "体力 -10，好感 +5，成功可大涨粉丝", effect: { stamina: -10, affection: 5 } },
+          { label: "突出角色默契", mod: 4, hint: "好感会额外参与判定" },
           { label: "战略撤退", mod: -999, hint: "体力 +3，事务所评价 -2", effect: { stamina: 3, agency: -2 } }
         ]
       },
@@ -538,7 +501,7 @@
         failLog: "你喊了二十遍登录奖励，最后听起来像讨债提醒。",
         choices: [
           { label: "元气拉满", mod: 5, hint: "声线判定更重要，体力 -6", effect: { stamina: -6 } },
-          { label: "可爱但省电", mod: 0, hint: "稳定发挥" },
+          { label: "请凛当临时听众", mod: 7, hint: "好感 +3，心理 +2", effect: { affection: 3, mental: 2 } },
           { label: "放弃本次", mod: -999, hint: "心理 +3，粉丝 -10", effect: { mental: 3, fans: -10 } }
         ]
       }
@@ -547,55 +510,82 @@
     const events = [
       {
         title: "广播事故：麦没关",
-        text: [
-          "节目中场休息，你小声说了一句‘这周台本好像比泡面说明书还长’。",
-          "下一秒，导播的表情让你明白：麦克风，从来没有真正休息。"
-        ],
+        text: ["节目中场休息，你小声说了一句“这周台本好像比泡面说明书还长”。", "下一秒，导播的表情让你明白：麦克风，从来没有真正休息。"],
         choices: [
-          { label: "当场土下座式道歉", hint: "炎上 -8，心理 -5，谈吐 +2", effect: { flame: -8, mental: -5, talk: 2 }, log: "你道歉得太诚恳，切片标题变成了‘新人声优求生欲名场面’。" },
+          { label: "当场土下座式道歉", hint: "炎上 -8，心理 -5，谈吐 +2", effect: { flame: -8, mental: -5, talk: 2 }, log: "你道歉得太诚恳，切片标题变成了“新人声优求生欲名场面”。" },
           { label: "顺势吐槽成节目梗", hint: "粉丝 +260，谈吐 +5，炎上 +5", effect: { fans: 260, talk: 5, flame: 5 }, log: "你把事故圆成了固定环节。经纪人一边胃痛一边点头。" },
-          { label: "装作信号不好", hint: "炎上 +10，事务所评价 -5", effect: { flame: 10, agency: -5 }, log: "观众不一定懂配音，但都懂什么叫装傻。" }
+          { label: "看向凛求救", hint: "好感 +6，炎上 -3，谈吐 +2", effect: { affection: 6, flame: -3, talk: 2 }, log: "凛接住了你的慌张。你们一唱一和，观众开始刷“这对组合有点好嗑”。" }
         ]
       },
       {
         title: "前辈请你喝奶茶",
-        text: [
-          "录音结束后，前辈把你叫到自动贩卖机旁。",
-          "她说：新人时期最重要的不是赢，是不要在还没赢之前把自己烧干。"
-        ],
+        text: ["录音结束后，前辈把你叫到自动贩卖机旁。", "她说：新人时期最重要的不是赢，是不要在还没赢之前把自己烧干。"],
         choices: [
           { label: "请教演技细节", hint: "演技 +8，心理 +4", effect: { acting: 8, mental: 4 }, log: "前辈示范了一个眼神三种情绪。虽然动画里看不到眼神，但你悟了。" },
-          { label: "请教营业边界", hint: "谈吐 +7，炎上 -5", effect: { talk: 7, flame: -5 }, log: "你学到一句万能回复：谢谢喜欢，我会继续努力。" },
-          { label: "聊最近补的番", hint: "宅力 +7，粉丝 +60", effect: { otaku: 7, fans: 60 }, log: "前辈其实也是隐藏宅。你们在贩卖机前聊到灯自动熄灭。" }
+          { label: "请教恋爱营业边界", hint: "谈吐 +5，炎上 -6，好感 +3", effect: { talk: 5, flame: -6, affection: 3 }, log: "前辈说：真心和营业都要有边界。你听懂了，也好像没完全听懂。" },
+          { label: "给凛也带一杯", hint: "好感 +8，资金 -2，心理 +3", effect: { affection: 8, money: -2, mental: 3 }, cost: { money: 2 }, log: "凛接过奶茶时耳尖有点红。她说只是热的，绝对只是热的。" }
         ]
       },
       {
         title: "粉丝来信箱爆满",
-        text: [
-          "事务所递来一箱粉丝信。里面有画、有长文感想，还有一张写着‘请务必活下去’的便利贴。",
-          "你突然意识到，自己的声音已经抵达了某些人的日常。"
-        ],
+        text: ["事务所递来一箱粉丝信。里面有画、有长文感想，还有一张写着“请务必活下去”的便利贴。", "其中几封信提到你和凛的共演：希望还能听到你们一起笑。"],
         choices: [
           { label: "逐封回信", hint: "粉丝 +180，心理 +8，体力 -7", effect: { fans: 180, mental: 8, stamina: -7 }, log: "你回信回到手酸，但心里像被热可可填满。" },
-          { label: "录感谢短视频", hint: "粉丝 +260，谈吐 +3，炎上 +3", effect: { fans: 260, talk: 3, flame: 3 }, log: "感谢视频播放量不错，评论区开始争论你到底是不是天然。" },
+          { label: "和凛录感谢短视频", hint: "粉丝 +360，好感 +5，炎上 +4", effect: { fans: 360, affection: 5, flame: 4 }, log: "感谢视频播放量不错。评论区的显微镜开始分析你们对视的秒数。" },
           { label: "先收藏起来", hint: "心理 +3，事务所评价 +2", effect: { mental: 3, agency: 2 }, log: "你把信放进柜子最上层。低落时再打开。" }
         ]
       },
       {
         title: "漫展舞台突袭",
-        text: [
-          "原定嘉宾堵在路上，主持人看向你：能不能撑十分钟？",
-          "台下全是熟悉作品三秒能接梗的观众。这里是舞台，也是大型宅力考试。"
-        ],
+        text: ["原定嘉宾堵在路上，主持人看向你：能不能撑十分钟？", "台下全是熟悉作品三秒能接梗的观众。这里是舞台，也是大型宅力考试。"],
         choices: [
           { label: "即兴主持", hint: "谈吐 +8，粉丝 +320，体力 -8", effect: { talk: 8, fans: 320, stamina: -8 }, log: "你撑满了十二分钟。台下甚至开始喊安可。" },
-          { label: "现场配名场面", hint: "演技 +5，声线 +5，粉丝 +220", effect: { acting: 5, voice: 5, fans: 220 }, log: "你的即兴配音被上传，标题是‘新人但很会’。" },
+          { label: "和凛现场配名场面", hint: "演技 +5，声线 +5，好感 +6，粉丝 +260", effect: { acting: 5, voice: 5, affection: 6, fans: 260 }, log: "你们的即兴配音被上传，标题是“同期女声优默契过头了吧”。" },
           { label: "把锅推给主持人", hint: "心理 +4，事务所评价 -6", effect: { mental: 4, agency: -6 }, log: "你成功脱身，也成功被经纪人记了一笔。" }
         ]
       }
     ];
 
-    let state = loadGameData() || structuredClone(baseState);
+    const romanceEvents = [
+      {
+        title: "雨夜共伞",
+        text: ["夜间录音结束，雨把事务所门口变成了小型水属性副本。", "雾岛凛站在你旁边，举起一把明显不够两个人用的伞。"],
+        choices: [
+          { label: "一起挤回车站", hint: "好感 +12，心理 +6", effect: { affection: 12, mental: 6 }, log: "你们一路肩膀碰肩膀。凛说雨声很吵，但你听见了她笑。" },
+          { label: "把伞让给她", hint: "好感 +8，体力 -5", effect: { affection: 8, stamina: -5 }, log: "凛第二天把洗好的毛巾塞给你，语气凶得像在配傲娇角色。" },
+          { label: "叫经纪人来接", hint: "炎上 -2，事务所评价 +2", effect: { flame: -2, agency: 2 }, log: "经纪人来了，车里安静得像试音失败后的休息室。" }
+        ]
+      },
+      {
+        title: "双人广播企划",
+        text: ["事务所安排你和凛做一期双人广播。台本写着“自然互动”，这四个字看起来比绕口令还难。", "开播前，凛小声问：我们平时那样就可以吗？"],
+        choices: [
+          { label: "照平时聊天", hint: "粉丝 +420，好感 +8，炎上 +5", effect: { fans: 420, affection: 8, flame: 5 }, log: "你们笑到导播提醒控时。节目剪辑区出现了新的热门标签。" },
+          { label: "认真做节目", hint: "谈吐 +8，粉丝 +220，事务所评价 +4", effect: { talk: 8, fans: 220, agency: 4 }, log: "节目非常稳。凛下播后说，偶尔稳一点也不错。" },
+          { label: "偷偷念粉丝来信", hint: "好感 +10，心理 +5，炎上 +3", effect: { affection: 10, mental: 5, flame: 3 }, log: "读到“请永远一起配音”时，你们同时卡壳。导播笑得很坏。" }
+        ]
+      },
+      {
+        title: "天台告白练习",
+        text: ["新作里有一段告白戏，你和凛被要求提前找感觉。", "天台风很轻，台词却突然变得不像台词。"],
+        choices: [
+          { label: "照着台本说完", hint: "演技 +8，好感 +5", effect: { acting: 8, affection: 5 }, log: "你完整说完台词。凛鼓掌，但眼睛一直没有移开。" },
+          { label: "把真心混进去", hint: "好感 +16，心理 +6，关系可能推进", effect: { affection: 16, mental: 6 }, romanceStep: 1, log: "你说完后，两个人都安静了。凛轻声说：这句不像演的。" },
+          { label: "用玩笑带过去", hint: "谈吐 +5，好感 +3", effect: { talk: 5, affection: 3 }, log: "你把气氛转成吐槽大会。凛笑了，但那句台词留在风里。" }
+        ]
+      },
+      {
+        title: "关系确认",
+        text: ["收录结束后，凛把你留在空棚。她的手指捏着台本边角，像在和全世界的延迟战斗。", "她问：如果不是角色，如果是我本人说喜欢你，你会怎么接？"],
+        choices: [
+          { label: "认真回应她", hint: "关系：恋人，好感 +12，心理 +10", effect: { affection: 12, mental: 10 }, setRelationship: 2, log: "你握住她的手。没有 BGM，没有聚光灯，但这句台词你一辈子不会忘。" },
+          { label: "说还想慢慢确认", hint: "关系：暧昧，好感 +6，炎上 -2", effect: { affection: 6, flame: -2 }, setRelationship: 1, log: "凛点点头，说她可以等。你突然觉得这一行的等待也没那么可怕。" },
+          { label: "先专注事业", hint: "事务所评价 +5，心理 -4，好感 -6", effect: { agency: 5, mental: -4, affection: -6 }, log: "你把心动收进台本夹。凛笑着说理解，但那天之后你们少聊了很多。" }
+        ]
+      }
+    ];
+
+    let state = migrateSave(loadGameData()) || structuredClone(baseState);
 
     const $ = (selector) => document.querySelector(selector);
     const nodes = {
@@ -623,13 +613,14 @@
     function applyEffect(effect = {}) {
       for (const [key, value] of Object.entries(effect)) {
         if (statDefs.some(([, stat]) => stat === key) || key === "agency" || key === "flame") {
-          state[key] = clamp(state[key] + value);
+          state[key] = clamp((state[key] || 0) + value);
         } else if (key === "fans") {
           state.fans = Math.max(0, state.fans + value);
         } else {
           state[key] += value;
         }
       }
+      updateRelationship();
     }
 
     function hasCost(cost = {}) {
@@ -641,9 +632,14 @@
       state.log = state.log.slice(0, 18);
     }
 
+    function updateRelationship() {
+      if (state.relationship < 1 && state.affection >= 45) state.relationship = 1;
+      if (state.relationship < 2 && state.affection >= 82) state.relationship = 1;
+    }
+
     function weeklyDrift() {
       state.stamina = clamp(state.stamina - 3);
-      state.mental = clamp(state.mental - (state.flame > 45 ? 7 : 3));
+      state.mental = clamp(state.mental - (state.flame > 45 ? 7 : 3) + (state.relationship === 2 ? 2 : 0));
       state.agency = clamp(state.agency + (state.roles.length > 2 ? 2 : 0));
       state.fans = Math.max(0, Math.round(state.fans + state.roles.length * 18 - (state.flame > 60 ? 90 : 0)));
       if (state.week % 4 === 0) {
@@ -661,8 +657,10 @@
     }
 
     function chooseEvent(choice) {
-      if (state.ending) return;
+      if (state.ending || !hasCost(choice.cost)) return;
       applyEffect(choice.effect);
+      if (choice.romanceStep && state.affection >= 65) state.relationship = Math.max(state.relationship, choice.romanceStep);
+      if (choice.setRelationship !== undefined) state.relationship = choice.setRelationship;
       addLog(choice.log);
       nextWeek();
     }
@@ -671,16 +669,17 @@
       if (state.ending) return;
       applyEffect(choice.effect);
       if (choice.mod <= -999) {
-        addLog("你选择暂时不参加试音。机会还有，嗓子只有一副。");
+        addLog("你选择暂时不参加试音。机会还有，嗓子和心跳都只有一副。");
         nextWeek();
         return;
       }
-      const score = Object.entries(audition.req).reduce((sum, [key, req]) => sum + (state[key] - req), 0) + choice.mod + Math.floor(state.agency / 10);
-      const extra = audition.id === "idol" ? Math.floor((state.acting - 40) / 4) : 0;
-      if (score + extra >= 0) {
+      const base = Object.entries(audition.req).reduce((sum, [key, req]) => sum + (state[key] - req), 0);
+      const chemistry = audition.id === "idol" ? Math.floor(state.affection / 8) : 0;
+      const score = base + choice.mod + Math.floor(state.agency / 10) + chemistry;
+      if (score >= 0) {
         if (!state.roles.includes(audition.success)) state.roles.push(audition.success);
-        const fanGain = audition.id === "idol" ? 900 : 520;
-        applyEffect({ fans: fanGain, agency: 10, mental: 4 });
+        const fanGain = audition.id === "idol" ? 1000 : 520;
+        applyEffect({ fans: fanGain, agency: 10, mental: 4, affection: audition.id === "idol" ? 6 : 0 });
         addLog(`试音成功！你拿到了「${audition.success}」。粉丝数开始出现你不敢数的增长。`);
       } else {
         applyEffect({ mental: -8, agency: -3 });
@@ -705,7 +704,11 @@
       } else if (state.flame >= 100) {
         state.ending = { title: "传说级炎上", text: "热搜、切片、长文分析同时抵达。你学会了互联网不是录音棚，它不会喊停。" };
       } else if (state.week > MAX_WEEK) {
-        if (state.roles.some(role => role.includes("主役")) && state.fans >= 8000) {
+        if (state.relationship === 2 && state.roles.some(role => role.includes("双人")) && state.fans >= 7000) {
+          state.ending = { title: "双声线恋人结局", text: "你和凛以双人组合出道，粉丝说你们的默契像台本写好的。只有你们知道，那些心跳没有台本。" };
+        } else if (state.relationship === 2 && state.affection >= 82) {
+          state.ending = { title: "秘密恋人结局", text: "事业还在爬坡，但每个深夜收录后，都有人和你一起走到车站。你终于不再一个人面对聚光灯。" };
+        } else if (state.roles.some(role => role.includes("双人")) && state.fans >= 8000) {
           state.ending = { title: "奇迹主役结局", text: "动画播出后，你的名字和角色一起被记住。你终于有了第一句代表台词。" };
         } else if (state.singing >= 70 && state.talk >= 62 && state.fans >= 6000) {
           state.ending = { title: "偶像声优路线", text: "你站上小型 Live 舞台，台下荧光棒像一片会呼吸的星海。" };
@@ -721,6 +724,10 @@
 
     function currentMode() {
       if (state.ending) return { type: "ending" };
+      if ([7, 14, 27, 36].includes(state.week)) {
+        const index = [7, 14, 27, 36].indexOf(state.week);
+        return { type: "romance", data: romanceEvents[index] };
+      }
       if (state.week % 8 === 0) return { type: "audition", data: auditions[(state.week / 8 - 1) % auditions.length] };
       if (state.week % 5 === 0) return { type: "event", data: events[(state.week / 5 - 1) % events.length] };
       return { type: "schedule" };
@@ -733,11 +740,19 @@
       return "低";
     }
 
+    function relationshipLabel() {
+      if (state.relationship === 2) return "恋人";
+      if (state.relationship === 1) return "暧昧";
+      if (state.affection >= 35) return "在意";
+      return "同期";
+    }
+
     function moodLabel() {
+      if (state.relationship === 2) return "关系：恋人";
       if (state.mental < 30) return "心态：快碎了";
       if (state.stamina < 30) return "状态：电量不足";
       if (state.flame > 55) return "网络：火药味";
-      if (state.fans > 5000) return "粉丝：开始成群";
+      if (state.affection > 60) return "关系：空气很甜";
       return "状态：还活着，很伟大";
     }
 
@@ -771,14 +786,15 @@
         nodes.storyText.innerHTML = `
           <p>${state.ending.text}</p>
           <div class="ending">
-            <p>最终数据：粉丝 ${state.fans}，履历 ${state.roles.length} 个，演技 ${state.acting}，声线 ${state.voice}，歌唱 ${state.singing}，谈吐 ${state.talk}，炎上风险 ${state.flame}。</p>
+            <p>最终数据：粉丝 ${state.fans}，履历 ${state.roles.length} 个，演技 ${state.acting}，声线 ${state.voice}，好感 ${state.affection}，关系 ${relationshipLabel()}，炎上风险 ${state.flame}。</p>
           </div>
         `;
-        nodes.choices.innerHTML = `<button class="choice" type="button" onclick="newGame()"><strong>重新开始</strong><small>带着这次的经验，再开一条新人路线。</small></button>`;
+        nodes.choices.innerHTML = `<button class="choice" type="button" onclick="newGame()"><strong>重新开始</strong><small>带着这次的心跳，再开一条新人路线。</small></button>`;
         return;
       }
       if (mode.type === "audition") renderAudition(mode.data);
       if (mode.type === "event") renderEvent(mode.data);
+      if (mode.type === "romance") renderRomance(mode.data);
       if (mode.type === "schedule") renderSchedule();
     }
 
@@ -786,11 +802,11 @@
       nodes.titleText.textContent = "本周日程安排";
       nodes.storyText.innerHTML = `
         <p>经纪人把白板推到你面前。本周没有强制试音，是自由安排的宝贵时间。</p>
-        <p>你可以练功、营业、补番、休息，或者去打工补贴逐渐变薄的钱包。</p>
+        <p>你可以练功、营业、补番、休息，也可以去找雾岛凛。事业和心动都不会自己升级。</p>
       `;
       nodes.choices.innerHTML = schedules.map((choice, index) => {
         const disabled = hasCost(choice.cost) ? "" : "disabled";
-        const hint = hasCost(choice.cost) ? choice.hint : "资金不足，接下来要考虑打工了";
+        const hint = hasCost(choice.cost) ? choice.hint : "资源不足，接下来要考虑打工了";
         return `<button class="choice" ${disabled} onclick="chooseSchedule(schedules[${index}])"><strong>${choice.label}</strong><small>${hint}</small></button>`;
       }).join("");
     }
@@ -799,8 +815,17 @@
       nodes.titleText.textContent = event.title;
       nodes.storyText.innerHTML = event.text.map(line => `<p>${line}</p>`).join("");
       nodes.choices.innerHTML = event.choices.map((choice, index) => `
-        <button class="choice" onclick="chooseEvent(events[(state.week / 5 - 1) % events.length].choices[${index}])"><strong>${choice.label}</strong><small>${choice.hint}</small></button>
+        <button class="choice" ${hasCost(choice.cost) ? "" : "disabled"} onclick="chooseEvent(events[(state.week / 5 - 1) % events.length].choices[${index}])"><strong>${choice.label}</strong><small>${hasCost(choice.cost) ? choice.hint : "资金不足"}</small></button>
       `).join("");
+    }
+
+    function renderRomance(event) {
+      nodes.titleText.textContent = event.title;
+      nodes.storyText.innerHTML = event.text.map(line => `<p>${line}</p>`).join("");
+      nodes.choices.innerHTML = event.choices.map((choice, index) => {
+        const eventIndex = [7, 14, 27, 36].indexOf(state.week);
+        return `<button class="choice" ${hasCost(choice.cost) ? "" : "disabled"} onclick="chooseEvent(romanceEvents[${eventIndex}].choices[${index}])"><strong>${choice.label}</strong><small>${hasCost(choice.cost) ? choice.hint : "资金不足"}</small></button>`;
+      }).join("");
     }
 
     function renderAudition(audition) {
@@ -815,10 +840,14 @@
     }
 
     function renderSide() {
-      nodes.log.innerHTML = state.log.map(item => `<p>${item}</p>`).join("");
-      nodes.roles.innerHTML = state.roles.length
+      const relationship = `
+        <div class="item"><span>雾岛凛</span><span class="tag">${relationshipLabel()} · 好感 ${state.affection}</span></div>
+      `;
+      const roles = state.roles.length
         ? state.roles.map(role => `<div class="item"><span>${role}</span><span class="tag">出演</span></div>`).join("")
         : `<div class="item"><span>还没有正式角色</span><span class="tag">新人</span></div>`;
+      nodes.log.innerHTML = state.log.map(item => `<p>${item}</p>`).join("");
+      nodes.roles.innerHTML = relationship + roles;
     }
 
     function render() {
@@ -840,13 +869,13 @@
     function saveGame(show = true) {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state));
       if (show) {
-        addLog("进度已保存。明天的你会感谢今天没有手滑的你。");
+        addLog("进度已保存。明天的你、以及明天的凛，都会感谢今天没有手滑的你。");
         render();
       }
     }
 
     function loadGameData() {
-      const raw = localStorage.getItem(SAVE_KEY);
+      const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem("voice-actress-sim-v1");
       if (!raw) return null;
       try {
         return JSON.parse(raw);
@@ -855,11 +884,22 @@
       }
     }
 
+    function migrateSave(saved) {
+      if (!saved) return null;
+      return {
+        ...structuredClone(baseState),
+        ...saved,
+        affection: saved.affection ?? 12,
+        relationship: saved.relationship ?? 0,
+        log: saved.log?.length ? saved.log : structuredClone(baseState.log)
+      };
+    }
+
     function loadGame() {
-      const saved = loadGameData();
+      const saved = migrateSave(loadGameData());
       if (saved) {
         state = saved;
-        addLog("读取了上次的进度。台本还在，人生也还在。");
+        addLog("读取了上次的进度。台本还在，人生也还在，凛的未读消息也还在。");
       } else {
         addLog("没有找到存档。看来只能从新人重新开始了。");
       }
